@@ -1,8 +1,8 @@
 import pygame
-import random
 
 from random import randint
 from pygame.locals import (
+    RLEACCEL,
     K_UP,
     K_DOWN,
     K_LEFT,
@@ -20,7 +20,8 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         super(Player, self).__init__()
         self.dimensions = (25, 25)
-        self.surface = pygame.Surface((self.dimensions))
+        self.surface = pygame.image.load("player.bmp").convert()
+        self.surface.set_colorkey((225, 225, 225), RLEACCEL)
         self.rect = self.surface.get_rect()
         self.surface.fill(WHITE)
         self.center = (WINDOW[0] - self.dimensions[0] >> 1,
@@ -40,7 +41,7 @@ class Player(pygame.sprite.Sprite):
 class NPC(pygame.sprite.Sprite):
     def __init__(self):
         super(NPC, self).__init__()
-        self.dimensions = (3, 3)
+        self.dimensions = (25, 25)
         self.surface = pygame.Surface((self.dimensions))
         self.rect = self.surface.get_rect(
             center = (
@@ -49,7 +50,7 @@ class NPC(pygame.sprite.Sprite):
             )
         )
         self.surface.fill(WHITE)
-        self.speed = randint(1, 3)
+        self.speed = randint(3, 12)
  
     def update(self):
         self.rect.move_ip(-self.speed, 0)
@@ -57,9 +58,10 @@ class NPC(pygame.sprite.Sprite):
 
 pygame.init()
 
-screen  = pygame.display.set_mode(WINDOW)
+screen  = pygame.display.set_mode(WINDOW, pygame.DOUBLEBUF)
+clock = pygame.time.Clock()
 add_npc = pygame.USEREVENT + 1
-pygame.time.set_timer(add_npc, 100)
+pygame.time.set_timer(add_npc, 1000)
 
 player  = Player()
 npcs    = pygame.sprite.Group()
@@ -73,9 +75,9 @@ while running:
         if event.type == KEYDOWN:
             if event.key == K_ESCAPE: running = False
 
-        if event.type == QUIT: running = False
+        elif event.type == QUIT: running = False
 
-        if event.type == add_npc:
+        elif event.type == add_npc:
             new_npc = NPC()
             npcs.add(new_npc)
             sprites.add(new_npc)
@@ -89,10 +91,11 @@ while running:
 
     for sprite in sprites: screen.blit(sprite.surface, sprite.rect)
 
-    # if pygame.sprite.spritecollideany(player, npcs):
-    #     player.kill()
-    #     running = False
+    if pygame.sprite.spritecollideany(player, npcs):
+        player.kill()
+        running = False
 
     pygame.display.flip()
+    clock.tick(120)
 
 pygame.quit()
