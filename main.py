@@ -16,57 +16,46 @@ WHITE  = (255, 255, 255)
 BLACK  = (  0,   0,   0)
 WINDOW = (640, 480)
 
-class Player(pygame.sprite.Sprite):
+class Block(pygame.sprite.Sprite):
     def __init__(self):
-        super(Player, self).__init__()
-        self.dimensions = (25, 25)
-        self.surface = pygame.image.load("player.bmp").convert()
-        self.surface.set_colorkey((225, 225, 225), RLEACCEL)
+        super(Block, self).__init__()
+        self.surface = pygame.image.load("block_0.png").convert()
+        self.surface.set_colorkey((0, 0, 0), RLEACCEL)
         self.rect = self.surface.get_rect()
-        self.surface.fill(WHITE)
-        self.center = (WINDOW[0] - self.dimensions[0] >> 1,
-                       WINDOW[1] - self.dimensions[1] >> 1)
+
+class Tetramino(pygame.sprite.Sprite):
+    def __init__(self):
+        super(Tetramino, self).__init__()
+        self.surface = pygame.Surface((64, 64))
+        self.block = Block()
+        self.surface.blits(((self.block.surface, (32,  0)),
+                            (self.block.surface, (32, 16)),
+                            (self.block.surface, (32, 32)),
+                            (self.block.surface, (32, 48))))
+
+        self.rect = self.surface.get_rect()
 
     def update(self, keys):
-        if keys[K_UP]:    self.rect.move_ip( 0,-5)
-        if keys[K_DOWN]:  self.rect.move_ip( 0, 5)
-        if keys[K_LEFT]:  self.rect.move_ip(-5, 0)
-        if keys[K_RIGHT]: self.rect.move_ip( 5, 0)
+        if keys[K_UP]:    self.rect.move_ip( 0,-16)
+        if keys[K_DOWN]:  self.rect.move_ip( 0, 16)
+        if keys[K_LEFT]:  self.rect.move_ip(-16, 0)
+        if keys[K_RIGHT]: self.rect.move_ip( 16, 0)
 
         if self.rect.top  <= 0: self.rect.top  = 0
         if self.rect.left <  0: self.rect.left = 0
         if self.rect.bottom >= WINDOW[1]: self.rect.bottom = WINDOW[1]
         if self.rect.right  >  WINDOW[0]: self.rect.right  = WINDOW[0]
 
-class NPC(pygame.sprite.Sprite):
-    def __init__(self):
-        super(NPC, self).__init__()
-        self.dimensions = (25, 25)
-        self.surface = pygame.Surface((self.dimensions))
-        self.rect = self.surface.get_rect(
-            center = (
-                randint(WINDOW[0] + self.dimensions[0], WINDOW[0] + 100),
-                randint(0, WINDOW[1])
-            )
-        )
-        self.surface.fill(WHITE)
-        self.speed = randint(3, 12)
- 
-    def update(self):
-        self.rect.move_ip(-self.speed, 0)
-        if self.rect.right < 0: self.kill()
-
 pygame.init()
 
 screen  = pygame.display.set_mode(WINDOW, pygame.DOUBLEBUF)
 clock = pygame.time.Clock()
-add_npc = pygame.USEREVENT + 1
-pygame.time.set_timer(add_npc, 1000)
+lock_tetramino = pygame.USEREVENT + 1
 
-player  = Player()
-npcs    = pygame.sprite.Group()
+current = Tetramino()
 sprites = pygame.sprite.Group()
-sprites.add(player)
+locked = pygame.sprite.Group()
+sprites.add(current)
 
 running = True
 while running:
@@ -77,22 +66,22 @@ while running:
 
         elif event.type == QUIT: running = False
 
-        elif event.type == add_npc:
-            new_npc = NPC()
-            npcs.add(new_npc)
-            sprites.add(new_npc)
+        elif event.type == lock_tetramino:
+            new_tetramino = Tetramino()
+            sprites.add(new_tetramino)
+            locked.add(current)
 
     keys = pygame.key.get_pressed()
 
-    player.update(keys)
-    npcs.update()
+    current.update(keys)
 
     screen.fill(BLACK)
 
-    for sprite in sprites: screen.blit(sprite.surface, sprite.rect)
+    screen.blit(current.surface, current.rect)
+    # for sprite in sprites: screen.blit(sprite.surface, sprite.rect)
 
-    if pygame.sprite.spritecollideany(player, npcs):
-        player.kill()
+    if pygame.sprite.spritecollideany(current, locked):
+        current.kill()
         running = False
 
     pygame.display.flip()
