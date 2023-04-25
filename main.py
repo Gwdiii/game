@@ -28,11 +28,6 @@ class Tetramino(pygame.sprite.Sprite):
         super(Tetramino, self).__init__()
         self.surface = pygame.Surface((64, 64))
         self.block = Block()
-        self.surface.blits(((self.block.surface, (32,  0)),
-                            (self.block.surface, (32, 16)),
-                            (self.block.surface, (32, 32)),
-                            (self.block.surface, (32, 48))))
-
         self.rect = self.surface.get_rect()
 
     def update(self, keys):
@@ -46,13 +41,76 @@ class Tetramino(pygame.sprite.Sprite):
         if self.rect.bottom >= WINDOW[1]: self.rect.bottom = WINDOW[1]
         if self.rect.right  >  WINDOW[0]: self.rect.right  = WINDOW[0]
 
+class I(pygame.sprite.Sprite):
+    def __init__(self):
+        super(I, self).__init__()
+        self.tetramino = Tetramino()
+        self.tetramino.surface.blits(((self.tetramino.block.surface, (32,  0)),
+                                      (self.tetramino.block.surface, (32, 16)),
+                                      (self.tetramino.block.surface, (32, 32)),
+                                      (self.tetramino.block.surface, (32, 48))))
+
+class O(pygame.sprite.Sprite):
+    def __init__(self):
+        super(O, self).__init__()
+        self.tetramino = Tetramino()
+        self.tetramino.surface.blits(((self.tetramino.block.surface, (16, 16)),
+                                      (self.tetramino.block.surface, (16, 32)),
+                                      (self.tetramino.block.surface, (32, 16)),
+                                      (self.tetramino.block.surface, (32, 32))))
+
+class J(pygame.sprite.Sprite):
+    def __init__(self):
+        super(J, self).__init__()
+        self.tetramino = Tetramino()
+        self.tetramino.surface.blits(((self.tetramino.block.surface, ( 0, 32)),
+                                      (self.tetramino.block.surface, (16, 32)),
+                                      (self.tetramino.block.surface, (32, 32)),
+                                      (self.tetramino.block.surface, (32, 48))))
+
+class L(pygame.sprite.Sprite):
+    def __init__(self):
+        super(L, self).__init__()
+        self.tetramino = Tetramino()
+        self.tetramino.surface.blits(((self.tetramino.block.surface, ( 0, 32)),
+                                      (self.tetramino.block.surface, (16, 32)),
+                                      (self.tetramino.block.surface, (32, 32)),
+                                      (self.tetramino.block.surface, ( 0, 48))))
+
+class S(pygame.sprite.Sprite):
+    def __init__(self):
+        super(S, self).__init__()
+        self.tetramino = Tetramino()
+        self.tetramino.surface.blits(((self.tetramino.block.surface, (16, 32)),
+                                      (self.tetramino.block.surface, (32, 32)),
+                                      (self.tetramino.block.surface, ( 0, 48)),
+                                      (self.tetramino.block.surface, (16, 48))))
+
+class Z(pygame.sprite.Sprite):
+    def __init__(self):
+        super(Z, self).__init__()
+        self.tetramino = Tetramino()
+        self.tetramino.surface.blits(((self.tetramino.block.surface, ( 0, 32)),
+                                      (self.tetramino.block.surface, (16, 32)),
+                                      (self.tetramino.block.surface, (16, 48)),
+                                      (self.tetramino.block.surface, (32, 48))))
+
+class T(pygame.sprite.Sprite):
+    def __init__(self):
+        super(T, self).__init__()
+        self.tetramino = Tetramino()
+        self.tetramino.surface.blits(((self.tetramino.block.surface, (0, 32)),
+                                      (self.tetramino.block.surface, (16, 32)),
+                                      (self.tetramino.block.surface, (32, 32)),
+                                      (self.tetramino.block.surface, (16, 48))))
+
 pygame.init()
 
 screen  = pygame.display.set_mode(WINDOW, pygame.DOUBLEBUF)
 clock = pygame.time.Clock()
 lock_tetramino = pygame.USEREVENT + 1
 
-current = Tetramino()
+current = T()
 sprites = pygame.sprite.Group()
 locked = pygame.sprite.Group()
 sprites.add(current)
@@ -73,14 +131,14 @@ while running:
 
     keys = pygame.key.get_pressed()
 
-    current.update(keys)
+    current.tetramino.update(keys)
 
     screen.fill(BLACK)
 
-    screen.blit(current.surface, current.rect)
+    screen.blit(current.tetramino.surface, current.tetramino.rect)
     # for sprite in sprites: screen.blit(sprite.surface, sprite.rect)
 
-    if pygame.sprite.spritecollideany(current, locked):
+    if pygame.sprite.spritecollideany(current.tetramino, locked):
         current.kill()
         running = False
 
