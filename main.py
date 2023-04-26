@@ -26,7 +26,6 @@ class Block(pygame.sprite.Sprite):
 class Tetramino(pygame.sprite.Sprite):
     def __init__(self, props):
         super(Tetramino, self).__init__()
-        self.move = (0, 0)
         for position, exists in enumerate(props.grid):
             if exists:
                 row = (position %  4) * 16
@@ -35,35 +34,33 @@ class Tetramino(pygame.sprite.Sprite):
                 block.rect = pygame.Rect(row, col, 16, 16)
                 current.add(block)
 
-    def update(self, keys, current):
-        if keys[K_UP]:    self.move = ( 0,-1)
-        if keys[K_DOWN]:  self.move = ( 0, 1)
-        if keys[K_LEFT]:  self.move = (-1, 0)
-        if keys[K_RIGHT]: self.move = ( 1, 0)
+    def update(self, keys, blocks):
+
+        input_x = 0
+        input_y = 0
+
+        if keys[K_UP]:    input_y -= 16
+        if keys[K_DOWN]:  input_y += 16
+        if keys[K_LEFT]:  input_x -= 16
+        if keys[K_RIGHT]: input_x += 16
+
+        min_x = min_y = 0
+        max_x = WINDOW[0]
+        max_y = WINDOW[1]
+
+        for block in blocks:
+            
+            max_x = min(max_x, input_x, WINDOW[0] - block.rect.right)
+            max_y = min(max_y, input_y, WINDOW[1] - block.rect.bottom)
+            min_x = max(min_x, input_x, -block.rect.left)
+            min_y = max(min_y, input_y, -block.rect.top)
 
         next = pygame.sprite.Group()
-
-        for block in current:
-            block.rect.move_ip(self.move)
-
-            if block.rect.top  < 0:
-                block.rect.top = 0
-                break
-            if block.rect.left < 0:
-                block.rect.left = 0
-                break
-            if block.rect.bottom > WINDOW[1]:
-                block.rect.bottom = 0
-                break
-            if block.rect.right  > WINDOW[0]:
-                block.rect.right = 0
-                break
-
+        for block in blocks:
+            block.rect.move_ip((max_x + min_x, max_y + min_y))
             next.add(block)
 
-            if block == len(current) - 1: return next
-
-        return current
+        return next
 
 class I(pygame.sprite.Sprite):
     def __init__(self):
@@ -138,7 +135,7 @@ pygame.event.post(lock_event)
 
 locked  = pygame.sprite.Group()
 current = pygame.sprite.Group()
-tetramino = Tetramino(O())
+tetramino = Tetramino(Z())
 running = True
 while running:
 
