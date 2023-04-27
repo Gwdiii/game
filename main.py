@@ -12,81 +12,91 @@ from pygame.locals import (
 
 WINDOW = (640, 480)
 BLACK  = (0, 0, 0)
+ORIGIN = 3
 
-I = (7, [0,0,1,0,
-         0,0,1,0,
-         0,0,1,0,
-         0,0,1,0])
+O = [0,0,0,0,
+     0,1,1,0,
+     0,1,1,0,
+     0,0,0,0]
 
-O = (0, [0,0,0,0,
-         0,1,1,0,
-         0,1,1,0,
-         0,0,0,0])
+I = [0,0,0,0,
+     1,1,1,1,
+     0,0,0,0,
+     0,0,0,0]
 
-J = (10, [0,0,0,0,
-          0,0,0,0,
-          0,1,1,1,
-          0,0,0,1])
+J = [0,0,0,0,
+     0,1,1,1,
+     0,0,0,1,
+     0,0,0,0]
 
-L = (10, [0,0,0,0,
-          0,0,0,0,
-          0,1,1,1,
-          0,1,0,0])
+L = [0,0,0,0,
+     0,1,1,1,
+     0,1,0,0,
+     0,0,0,0]
 
-S = (10, [0,0,0,0,
-          0,0,0,0,
-          0,0,1,1,
-          0,1,1,0])
+S = [0,0,0,0,
+     0,0,1,1,
+     0,1,1,0,
+     0,0,0,0]
 
-Z = (10, [0,0,0,0,
-          0,0,0,0,
-          0,1,1,0,
-          0,0,1,1])
+Z = [0,0,0,0,
+     0,1,1,0,
+     0,0,1,1,
+     0,0,0,0]
 
-T = (10, [0,0,0,0,
-          0,0,0,0,
-          0,1,1,1,
-          0,0,1,0])
+T = [0,0,0,0,
+     0,1,1,1,
+     0,0,1,0,
+     0,0,0,0]
 
-grid = [0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,]
+PIECES = [O, I, J, L, S, Z, T]
+
+class Playfield():
+    def __init__(self):
+        self.grid = [0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,0,0,]
+
+    def spawn(self, config):
+        config_position = 4
+        grid_position = -13
+        for block in config:
+            if config_position % 4 == 0: grid_position += 6
+            if block: self.grid[grid_position] = block
+            config_position += 1
+            grid_position   += 1
+
+    def render(self, block):
+        for position, value in enumerate(self.grid):
+            if value:
+                x = (position  % 10) * 16
+                y = (position // 10) * 16
+                screen.blit(block.surface, (x, y))
 
 class Block(pygame.sprite.Sprite):
     def __init__(self):
-        super(Block, self).__init__()
         self.surface = pygame.image.load("block_0.png").convert()
         self.surface.set_colorkey((BLACK))
         self.rect = self.surface.get_rect()
 
 class Tetramino(pygame.sprite.Sprite):
-    def __init__(self, props):
-        super(Tetramino, self).__init__()
-        for position, exists in enumerate(props[1]):
-            if exists:
-                row = (position %  4) * 16
-                col = (position // 4) * 16
-                block = Block()
-                block.rect = pygame.Rect(row, col, 16, 16)
-                current.add(block)
-
     def update(self, keys, blocks):
 
         input_x = 0
@@ -119,32 +129,26 @@ pygame.init()
 
 screen  = pygame.display.set_mode(WINDOW, pygame.DOUBLEBUF)
 clock = pygame.time.Clock()
-lock_tetramino = pygame.USEREVENT + 1
-lock_event = pygame.event.Event(lock_tetramino)
-pygame.event.post(lock_event)
+playfield = Playfield()
+playfield.spawn(O)
 
-locked  = pygame.sprite.Group()
-current = pygame.sprite.Group()
-tetramino = Tetramino(Z)
 running = True
 while running:
 
     for event in pygame.event.get():
         if event.type == KEYDOWN:
-            if event.key == K_ESCAPE: running = False
-
-        elif event.type == QUIT: running = False
-
-        elif event.type == lock_tetramino:
-            locked.add(current)
+            if event.key  == K_ESCAPE: running = False
+        
+        if event.type == QUIT:     running = False
 
     keys = pygame.key.get_pressed()
 
-    current = tetramino.update(keys, current)
+    # current = tetramino.update(keys, current)
 
     screen.fill(BLACK)
 
-    for sprite in current: screen.blit(sprite.surface, sprite.rect)
+    playfield.render(Block())
+    # for sprite in current: screen.blit(sprite.surface, sprite.rect)
 
     pygame.display.flip()
     clock.tick(120)
