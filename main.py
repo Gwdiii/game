@@ -1,8 +1,6 @@
 import pygame
 
-from random import randint
 from pygame.locals import (
-    RLEACCEL,
     K_UP,
     K_DOWN,
     K_LEFT,
@@ -12,21 +10,76 @@ from pygame.locals import (
     QUIT,
 )
 
-WHITE  = (255, 255, 255)
-BLACK  = (  0,   0,   0)
 WINDOW = (640, 480)
+BLACK  = (0, 0, 0)
+
+I = (7, [0,0,1,0,
+         0,0,1,0,
+         0,0,1,0,
+         0,0,1,0])
+
+O = (0, [0,0,0,0,
+         0,1,1,0,
+         0,1,1,0,
+         0,0,0,0])
+
+J = (10, [0,0,0,0,
+          0,0,0,0,
+          0,1,1,1,
+          0,0,0,1])
+
+L = (10, [0,0,0,0,
+          0,0,0,0,
+          0,1,1,1,
+          0,1,0,0])
+
+S = (10, [0,0,0,0,
+          0,0,0,0,
+          0,0,1,1,
+          0,1,1,0])
+
+Z = (10, [0,0,0,0,
+          0,0,0,0,
+          0,1,1,0,
+          0,0,1,1])
+
+T = (10, [0,0,0,0,
+          0,0,0,0,
+          0,1,1,1,
+          0,0,1,0])
+
+grid = [0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,]
 
 class Block(pygame.sprite.Sprite):
     def __init__(self):
         super(Block, self).__init__()
         self.surface = pygame.image.load("block_0.png").convert()
-        self.surface.set_colorkey((0, 0, 0), RLEACCEL)
+        self.surface.set_colorkey((BLACK))
         self.rect = self.surface.get_rect()
 
 class Tetramino(pygame.sprite.Sprite):
     def __init__(self, props):
         super(Tetramino, self).__init__()
-        for position, exists in enumerate(props.grid):
+        for position, exists in enumerate(props[1]):
             if exists:
                 row = (position %  4) * 16
                 col = (position // 4) * 16
@@ -62,69 +115,6 @@ class Tetramino(pygame.sprite.Sprite):
 
         return next
 
-class I(pygame.sprite.Sprite):
-    def __init__(self):
-        super(I, self).__init__()
-        self.axis = 7
-        self.grid = [0,0,1,0,
-                     0,0,1,0,
-                     0,0,1,0,
-                     0,0,1,0]
-
-class O(pygame.sprite.Sprite):
-    def __init__(self):
-        super(O, self).__init__()
-        self.axis = 0
-        self.grid = [0,0,0,0,
-                     0,1,1,0,
-                     0,1,1,0,
-                     0,0,0,0]
-
-class J(pygame.sprite.Sprite):
-    def __init__(self):
-        super(J, self).__init__()
-        self.axis = 10
-        self.grid = [0,0,0,0,
-                     0,0,0,0,
-                     0,1,1,1,
-                     0,0,0,1]
-
-class L(pygame.sprite.Sprite):
-    def __init__(self):
-        super(L, self).__init__()
-        self.axis = 10
-        self.grid = [0,0,0,0,
-                     0,0,0,0,
-                     0,1,1,1,
-                     0,1,0,0]
-
-class S(pygame.sprite.Sprite):
-    def __init__(self):
-        super(S, self).__init__()
-        self.axis = 10
-        self.grid = [0,0,0,0,
-                     0,0,0,0,
-                     0,0,1,1,
-                     0,1,1,0]
-
-class Z(pygame.sprite.Sprite):
-    def __init__(self):
-        super(Z, self).__init__()
-        self.axis = 10
-        self.grid = [0,0,0,0,
-                     0,0,0,0,
-                     0,1,1,0,
-                     0,0,1,1]
-
-class T(pygame.sprite.Sprite):
-    def __init__(self):
-        super(T, self).__init__()
-        self.axis = 10
-        self.grid = [0,0,0,0,
-                     0,0,0,0,
-                     0,1,1,1,
-                     0,0,1,0]
-
 pygame.init()
 
 screen  = pygame.display.set_mode(WINDOW, pygame.DOUBLEBUF)
@@ -135,7 +125,7 @@ pygame.event.post(lock_event)
 
 locked  = pygame.sprite.Group()
 current = pygame.sprite.Group()
-tetramino = Tetramino(Z())
+tetramino = Tetramino(Z)
 running = True
 while running:
 
@@ -155,10 +145,6 @@ while running:
     screen.fill(BLACK)
 
     for sprite in current: screen.blit(sprite.surface, sprite.rect)
-
-    # if pygame.sprite.spritecollideany(current.tetramino, locked):
-    #     current.kill()
-    #     running = False
 
     pygame.display.flip()
     clock.tick(120)
