@@ -13,6 +13,11 @@ from pygame.locals import (
 WINDOW = (640, 480)
 BLACK  = (0, 0, 0)
 ORIGIN = 3
+UP     = -10
+DOWN   = 10
+LEFT   = -1
+RIGHT  = 1
+
 
 O = [0,0,0,0,
      0,1,1,0,
@@ -74,14 +79,55 @@ class Playfield():
                      0,0,0,0,0,0,0,0,0,0,
                      0,0,0,0,0,0,0,0,0,0,]
 
+        self.active = [0, 0, 0, 0]
+
     def spawn(self, config):
         config_position = 4
         grid_position = -13
+        active_index = 0
+
         for block in config:
             if config_position % 4 == 0: grid_position += 6
-            if block: self.grid[grid_position] = block
+
+            if block:
+                self.grid[grid_position] = block
+                self.active[active_index] = grid_position
+                active_index += 1
+
             config_position += 1
             grid_position   += 1
+
+        print(self.active)
+
+    def update(self, keys):
+
+        offset = 0
+
+        if keys[K_UP]:    offset += UP
+        if keys[K_DOWN]:  offset += DOWN
+        if keys[K_LEFT]:  offset += LEFT
+        if keys[K_RIGHT]: offset += RIGHT
+        if not offset: return
+
+        next = []
+        seen = set()
+        for position in self.active:
+                target   = position + offset
+                trailing = position - offset
+                if self.grid[target] == 0:
+                    self.grid[target] = 1
+                    next.append(target)
+                else: seen.add(position)
+
+                if self.grid[trailing] and trailing in seen:
+                    self.grid[trailing] = 0
+                    print(trailing)
+                    print(self.grid[trailing])
+                    next.append(position)
+                    seen.discard(trailing)
+
+        # print(self.grid)
+        self.active = next
 
     def render(self, block):
         for position, value in enumerate(self.grid):
@@ -136,19 +182,16 @@ running = True
 while running:
 
     for event in pygame.event.get():
-        if event.type == KEYDOWN:
-            if event.key  == K_ESCAPE: running = False
-        
-        if event.type == QUIT:     running = False
+        if event.type == KEYDOWN and event.key == K_ESCAPE: running = False
+        if event.type == QUIT: running = False
 
     keys = pygame.key.get_pressed()
 
-    # current = tetramino.update(keys, current)
+    playfield.update(keys)
 
     screen.fill(BLACK)
 
     playfield.render(Block())
-    # for sprite in current: screen.blit(sprite.surface, sprite.rect)
 
     pygame.display.flip()
     clock.tick(120)
