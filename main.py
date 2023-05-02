@@ -17,7 +17,10 @@ UP     = -10
 DOWN   = 10
 LEFT   = -1
 RIGHT  = 1
-
+RIGHT_BOUND = lambda x: not (x + 1) % 10
+LEFT__BOUND = lambda x: not x % 10
+UPPER_BOUND = lambda x: x < 10
+LOWER_BOUND = lambda x: x > 189
 
 O = [0,0,0,0,
      0,1,1,0,
@@ -79,25 +82,21 @@ class Playfield():
                      0,0,0,0,0,0,0,0,0,0,
                      0,0,0,0,0,0,0,0,0,0,]
 
-        self.active = [0, 0, 0, 0]
+        self.active = set()
 
     def spawn(self, config):
         config_position = 4
         grid_position = -13
-        active_index = 0
 
         for block in config:
             if config_position % 4 == 0: grid_position += 6
 
             if block:
                 self.grid[grid_position] = block
-                self.active[active_index] = grid_position
-                active_index += 1
+                self.active.add(grid_position)
 
             config_position += 1
             grid_position   += 1
-
-        print(self.active)
 
     def update(self, keys):
 
@@ -109,25 +108,28 @@ class Playfield():
         if keys[K_RIGHT]: offset += RIGHT
         if not offset: return
 
-        next = []
-        seen = set()
+        next = set()
+
         for position in self.active:
-                target   = position + offset
-                trailing = position - offset
-                if self.grid[target] == 0:
-                    self.grid[target] = 1
-                    next.append(target)
-                else: seen.add(position)
+            if offset % 10:
+                if offset > 0 and RIGHT_BOUND(position): break
+                if offset < 0 and LEFT__BOUND(position): break
+            else:
+                if offset > 0 and LOWER_BOUND(position): break
+                if offset < 0 and UPPER_BOUND(position): break
 
-                if self.grid[trailing] and trailing in seen:
+
+            target   = position + offset
+            trailing = position - offset
+            if self.grid[target] == 0:
+                self.grid[target] = 1
+                next.add(target)
+
+                if self.grid[trailing] and trailing in self.active:
                     self.grid[trailing] = 0
-                    print(trailing)
-                    print(self.grid[trailing])
-                    next.append(position)
-                    seen.discard(trailing)
+                    next.add(position)
 
-        # print(self.grid)
-        self.active = next
+        if next: self.active = next
 
     def render(self, block):
         for position, value in enumerate(self.grid):
@@ -138,38 +140,13 @@ class Playfield():
 
 class Block(pygame.sprite.Sprite):
     def __init__(self):
-        self.surface = pygame.image.load("block_0.png").convert()
+        self.surface = pygame.image.load("block_2.png").convert()
         self.surface.set_colorkey((BLACK))
-        self.rect = self.surface.get_rect()
 
-class Tetramino(pygame.sprite.Sprite):
-    def update(self, keys, blocks):
-
-        input_x = 0
-        input_y = 0
-
-        if keys[K_UP]:    input_y -= 16
-        if keys[K_DOWN]:  input_y += 16
-        if keys[K_LEFT]:  input_x -= 16
-        if keys[K_RIGHT]: input_x += 16
-
-        min_x = min_y = 0
-        max_x = WINDOW[0]
-        max_y = WINDOW[1]
-
-        for block in blocks:
-            
-            max_x = min(max_x, input_x, WINDOW[0] - block.rect.right)
-            max_y = min(max_y, input_y, WINDOW[1] - block.rect.bottom)
-            min_x = max(min_x, input_x, -block.rect.left)
-            min_y = max(min_y, input_y, -block.rect.top)
-
-        next = pygame.sprite.Group()
-        for block in blocks:
-            block.rect.move_ip((max_x + min_x, max_y + min_y))
-            next.add(block)
-
-        return next
+def quit(event):
+    if event.type == KEYDOWN and event.key == K_ESCAPE: return False
+    if event.type == QUIT: return False
+    return True
 
 pygame.init()
 
@@ -181,18 +158,12 @@ playfield.spawn(O)
 running = True
 while running:
 
-    for event in pygame.event.get():
-        if event.type == KEYDOWN and event.key == K_ESCAPE: running = False
-        if event.type == QUIT: running = False
+    for event in pygame.event.get(): running = quit(event)
 
     keys = pygame.key.get_pressed()
-
     playfield.update(keys)
-
     screen.fill(BLACK)
-
     playfield.render(Block())
-
     pygame.display.flip()
     clock.tick(120)
 
