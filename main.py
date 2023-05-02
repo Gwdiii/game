@@ -1,7 +1,6 @@
 import pygame
 
 from pygame.locals import (
-    K_UP,
     K_DOWN,
     K_LEFT,
     K_RIGHT,
@@ -12,15 +11,15 @@ from pygame.locals import (
 
 WINDOW = (640, 480)
 BLACK  = (0, 0, 0)
+DROP_INTERVAL = 60
 ORIGIN = 3
-UP     = -10
 DOWN   = 10
 LEFT   = -1
 RIGHT  = 1
 RIGHT_BOUND = lambda x: not (x + 1) % 10
 LEFT__BOUND = lambda x: not x % 10
-UPPER_BOUND = lambda x: x < 10
 LOWER_BOUND = lambda x: x > 189
+TOTAL_BOUND = lambda x: x > 199 
 
 O = [0,0,0,0,
      0,1,1,0,
@@ -83,6 +82,7 @@ class Playfield():
                      0,0,0,0,0,0,0,0,0,0,]
 
         self.active = set()
+        self.frame  = 1
 
     def spawn(self, config):
         config_position = 4
@@ -102,7 +102,12 @@ class Playfield():
 
         offset = 0
 
-        if keys[K_UP]:    offset += UP
+        if self.frame == DROP_INTERVAL:
+            offset += DOWN
+            self.frame = 1
+        else:
+            self.frame += 1
+
         if keys[K_DOWN]:  offset += DOWN
         if keys[K_LEFT]:  offset += LEFT
         if keys[K_RIGHT]: offset += RIGHT
@@ -114,13 +119,12 @@ class Playfield():
             if offset % 10:
                 if offset > 0 and RIGHT_BOUND(position): break
                 if offset < 0 and LEFT__BOUND(position): break
-            else:
-                if offset > 0 and LOWER_BOUND(position): break
-                if offset < 0 and UPPER_BOUND(position): break
 
+            elif   offset > 0 and LOWER_BOUND(position): break
 
             target   = position + offset
             trailing = position - offset
+            if TOTAL_BOUND(target): break
             if self.grid[target] == 0:
                 self.grid[target] = 1
                 next.add(target)
@@ -144,9 +148,9 @@ class Block(pygame.sprite.Sprite):
         self.surface.set_colorkey((BLACK))
 
 def quit(event):
-    if event.type == KEYDOWN and event.key == K_ESCAPE: return False
-    if event.type == QUIT: return False
-    return True
+    if event.type == KEYDOWN and event.key == K_ESCAPE: return True
+    if event.type == QUIT: return True
+    return False
 
 pygame.init()
 
@@ -154,17 +158,28 @@ screen  = pygame.display.set_mode(WINDOW, pygame.DOUBLEBUF)
 clock = pygame.time.Clock()
 playfield = Playfield()
 playfield.spawn(O)
+block = Block()
 
+frame = 1
 running = True
 while running:
 
-    for event in pygame.event.get(): running = quit(event)
+    for event in pygame.event.get(): running = not quit(event)
 
     keys = pygame.key.get_pressed()
     playfield.update(keys)
     screen.fill(BLACK)
-    playfield.render(Block())
+    playfield.render(block)
     pygame.display.flip()
-    clock.tick(120)
+    clock.tick(60)
 
 pygame.quit()
+
+# print('offset: ' + str(offset))
+# print('horizontal')
+# print('right_bound')
+# print('left_bound')
+# print('lower_bound')
+# print('target: ' + str(target))
+# print('position: ' + str(position))
+# print('trailing: ' + str(trailing))
