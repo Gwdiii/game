@@ -12,9 +12,6 @@ from pygame.locals import (
 WINDOW = (640, 480)
 BLACK  = (0, 0, 0)
 DROP_INTERVAL = 60
-RIGHT_BOUND = lambda x: x == 0
-LEFT__BOUND = lambda x: x == 9
-LOWER_BOUND = lambda y: y == 19
 
 O = [[0,0,0,0],
      [0,1,1,0],
@@ -92,68 +89,41 @@ class Playfield():
         offset_x = 0
 
         if self.frame == DROP_INTERVAL:
-            print('drop')
-            offset_y += 1
+            offset_y  += 1
             self.frame = 1
         else:
             self.frame += 1
 
-        if keys[K_DOWN]:
-            print('down')
-            offset_y += 1
-        if keys[K_LEFT]:
-            print('left')
-            offset_x -= 1
-        if keys[K_RIGHT]:
-            print('right')
-            offset_x += 1
-        if not offset_y and not offset_x:
-            print('no offset')
-            return
+        if keys[K_DOWN]:  offset_y += 1
+        if keys[K_LEFT]:  offset_x -= 1
+        if keys[K_RIGHT]: offset_x += 1
+
+        if not offset_y and not offset_x: return
 
         next = set()
 
-        print('offset_y: ' + str(offset_y))
-        print('offset_x: ' + str(offset_x))
         for position in self.active:
             if offset_x:
-                print('horizontal')
-                if offset_x > 0 and position[0] == 9:
-                    print('right_bound')
-                    offset_x = 0
-                if offset_x < 0 and position[0] == 0:
-                    print('left_bound')
-                    offset_x = 0
+                if offset_x > 0 and position[0] == 9: offset_x = 0
+                if offset_x < 0 and position[0] == 0: offset_x = 0
 
-            elif   offset_y > 0 and position[1] == 19:
-                print('lower_bound')
-                offset_y = 0
+            if offset_y > 0 and position[1] == 19: offset_y = 0
 
-            target   = (position[1] + offset_y, position[0] + offset_x)
-            trail    = (position[1] - offset_y, position[0] - offset_x)
-            print('target: '   + str(target))
-            print('position: ' + str(position))
-            print('trailing: ' + str(trail))
-            if self.grid[target[0]][target[1]] == 0:
-                print('move position to target')
-                next.add(target)
+            target = (position[1] + offset_y, position[0] + offset_x)
+            trail  = (position[1] - offset_y, position[0] - offset_x)
 
-                if self.grid[trail[0]][trail[1]] and trail in self.active:
-                    print('move trailing to position')
-                    self.grid[trail[0]][trail[1]] = 0
-                    next.add(position)
+            if self.grid[target[0]][target[1]] == 0: next.add(target)
+
+            if self.grid[trail[0]][trail[1]] and trail in self.active:
+                self.grid[trail[0]][trail[1]] = 0
+                next.add(position)
 
         if len(next) == 4:
-            print('next: ' + str(next))
-            sprite = 0
-            for position in self.active:
-                sprite = self.grid[position[0]][position[1]]
-                self.grid[position[0]][position[1]] = 0
-            for position in next:
-                self.grid[position[0]][position[1]] = sprite
+            sample = list(self.active)[0]
+            sprite = self.grid[sample[0]][sample[1]]
+            for position in self.active: self.grid[position[0]][position[1]] = 0
+            for position in next: self.grid[position[0]][position[1]] = sprite
             self.active = next
-        print(self.grid)
-        print('//////////////////////')
 
     def render(self, blocks):
         for y, row in enumerate(self.grid):
@@ -193,73 +163,3 @@ while running:
     clock.tick(60)
 
 pygame.quit()
-
-# print('offset: ' + str(offset))
-# print('horizontal')
-# print('right_bound')
-# print('left_bound')
-# print('lower_bound')
-# print('target: ' + str(target))
-# print('position: ' + str(position))
-# print('trailing: ' + str(trailing))
-
-# //////////////////////
-# drop
-# left
-# offset: 9
-# horizontal
-# target: 149
-# position: 140
-# trailing: 131
-# move position to target
-# horizontal
-# target: 150
-# position: 141
-# trailing: 132
-# horizontal
-# target: 159
-# position: 150
-# trailing: 141
-# move position to target
-# move trailing to position
-# horizontal
-# target: 160
-# position: 151
-# trailing: 142
-# move position to target
-# next
-# [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-# //////////////////////
-# left
-# offset: -1
-# horizontal
-# left_bound
-# [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-# //////////////////////
-# left
-# offset: -1
-# horizontal
-# left_bound
-# [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-# //////////////////////
-# drop
-# offset: 10
-# target: 170
-# position: 160
-# trailing: 150
-# move position to target
-# move trailing to position
-# target: 159
-# position: 149
-# trailing: 139
-# target: 160
-# position: 150
-# trailing: 140
-# target: 169
-# position: 159
-# trailing: 149
-# move position to target
-# move trailing to position
-# next
-# [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-# //////////////////////
