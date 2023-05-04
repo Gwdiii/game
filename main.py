@@ -77,84 +77,45 @@ class Playfield():
         self.frame  = 1
 
     def spawn(self, config):
-
-        for y in range(1,3):
+        for y in range(1, 3):
             for x in range(4):
                 if config[y][x]:
                     self.grid[y-1][x+3] = config[y][x]
                     self.active.add((y-1, x+3))
 
     def update(self, keys):
-
         offset_y = 0
         offset_x = 0
 
         if self.frame == DROP_INTERVAL:
-            print('drop')
-            offset_y += 1
+            offset_y  += 1
             self.frame = 1
         else:
             self.frame += 1
 
-        if keys[K_DOWN]:
-            print('down')
-            offset_y += 1
-        if keys[K_LEFT]:
-            print('left')
-            offset_x -= 1
-        if keys[K_RIGHT]:
-            print('right')
-            offset_x += 1
-        if not offset_y and not offset_x:
-            # print('no offset')
-            return
+        if keys[K_DOWN]:  offset_y += 1
+        if keys[K_LEFT]:  offset_x -= 1
+        if keys[K_RIGHT]: offset_x += 1
+        if not offset_y and not offset_x: return
 
-        print(self.grid)
+        next_active = set()
 
-        next = set()
-
-        print('offset_y: ' + str(offset_y))
-        print('offset_x: ' + str(offset_x))
-        print('self.active : ' + str(self.active))
         for position in self.active:
-            if not 0 <= position[1] + offset_x < 10:
-            # if offset_x > 0 and position[1] == 9:
-                # print('right_bound')
-                print('horizontal bound')
-                offset_x = 0
-            # if offset_x < 0 and position[1] == 0:
-            #     print('left_bound')
-            #     offset_x = 0
-
-            if not 0 <= position[0] + offset_y < 20:
-            # elif   offset_y > 0 and position[0] == 19:
-                print('vertical_bound')
-                offset_y = 0
-
+            if not 0 <= position[1] + offset_x < 10: offset_x = 0
+            if not 0 <= position[0] + offset_y < 20: offset_y = 0
             target = (position[0] + offset_y, position[1] + offset_x)
             trail  = (position[0] - offset_y, position[1] - offset_x)
-            print('target:   ' + str(target))
-            print('position: ' + str(position))
-            print('trailing: ' + str(trail))
+
             if self.grid[target[0]][target[1]] == 0:
-                print('move position to target')
-                next.add(target)
+                if trail in self.active: next_active.add(position)
+                next_active.add(target)
 
-                if trail in self.active: next.add(position)
-
-        if len(next) == 4:
-            print('next: ' + str(next))
+        if len(next_active) == 4:
             sample = list(self.active)[0]
-            print('sample: ' + str(sample))
             sprite = self.grid[sample[0]][sample[1]]
-            print('sprite: ' + str(sprite))
-            for position in self.active:
-                self.grid[position[0]][position[1]] = 0
-            for position in next:
-                self.grid[position[0]][position[1]] = sprite
-            self.active = next
-            print(self.grid)
-        print('//////////////////////')
+            for position in self.active: self.grid[position[0]][position[1]] = 0
+            for position in next_active: self.grid[position[0]][position[1]] = sprite
+            self.active = next_active
 
     def render(self, blocks):
         for y, row in enumerate(self.grid):
