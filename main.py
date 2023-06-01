@@ -74,14 +74,15 @@ class Playfield():
                      [0,0,0,0,0,0,0,0,0,0],
                      [0,0,0,0,0,0,0,0,0,0]]
 
-        self.active_piece = 0
-        self.active = set()
+        self.curr_piece = 0
+        self.curr = set()
+        self.next = set()
         self.axis_y = 0
         self.axis_x = 0
         self.sprite = 0
 
     def spawn(self, index: int) -> None:
-        self.active_piece = index
+        self.curr_piece = index
         self.axis_y = 0
         self.axis_x = 5
 
@@ -98,14 +99,14 @@ class Playfield():
         for y in range(len(mask)):
             for x in range(len(mask[0])):
 
-                target_y = y + origin_offset_y
-                target_x = x + origin_offset_x
+                to_y = y + origin_offset_y
+                to_x = x + origin_offset_x
 
                 if mask[y][x]:
-                    self.grid[target_y][target_x] = self.sprite
-                    self.active.add((target_y, target_x))
+                    self.grid[to_y][to_x] = self.sprite
+                    self.curr.add((to_y, to_x))
 
-    def collides_with(self, y: int, x: int) -> bool:
+    def collision(self, y: int, x: int) -> bool:
         lower_bound_y = 0
         lower_bound_x = 0
 
@@ -118,37 +119,43 @@ class Playfield():
 
         return False
 
+    def free(self,
+             y: int,
+             x: int,
+             calc_y: Callable[[int, int], int],
+             calc_x: Callable[[int, int], int]) -> bool:
+
+        to_y = calc_y(y, x)
+        to_x = calc_x(y, x)
+
+        if y == to_y and x == to_x:  return True
+        if not self.collision(y, x): return True
+        if not (y, x) in self.curr:  return False
+        if not self.free(to_y, to_x, calc_y, calc_x): return False
+
+        self.next.add((to_y, to_x))
+        return True
+
     def transform(self,
-                  push_y: Callable[[int, int], int],
-                  push_x: Callable[[int, int], int],
-                  pull_y: Callable[[int, int], int],
-                  pull_x: Callable[[int, int], int]) -> None:
+                  calc_y: Callable[[int, int], int],
+                  calc_x: Callable[[int, int], int]) -> None:
 
-        next_active = set()
-        for (y, x) in self.active:
-            target_y = push_y(y, x)
-            target_x = push_x(y, x)
-            trail_y  = pull_y(y, x)
-            trail_x  = pull_x(y, x)
+        if not self.curr_piece: return
 
-            if y == target_y and x == target_x:
-                next_active.add((target_y, target_x))
-                continue
+        self.next = set()
+        for (y, x) in self.curr:
+            to_y = calc_y(y, x)
+            to_x = calc_x(y, x)
 
-            if self.collides_with(target_y, target_x):
-                continue
+            if self.free(to_y, to_x, calc_y, calc_x):
+                self.next.add((to_y, to_x))
 
-            if (trail_y, trail_x) in self.active:
-                next_active.add((y, x))
-
-            next_active.add((target_y, target_x))
-
-            if len(next_active) == 4:
-                self.axis_y = push_y(self.axis_y, self.axis_x)
-                self.axis_x = push_x(self.axis_y, self.axis_x)
-                for (y, x) in self.active: self.grid[y][x] = 0
-                for (y, x) in next_active: self.grid[y][x] = self.sprite
-                self.active = next_active
+        if len(self.next) == 4:
+            self.axis_y = calc_y(self.axis_y, self.axis_x)
+            self.axis_x = calc_x(self.axis_y, self.axis_x)
+            for (y, x) in self.curr: self.grid[y][x] = 0
+            for (y, x) in self.next: self.grid[y][x] = self.sprite
+            self.curr = self.next
 
     def update(self,
                offset_y: int,
@@ -159,28 +166,22 @@ class Playfield():
         if drop:
             self.transform(
                 (lambda y, x: y + 1),
-                (lambda y, x: x),
-                (lambda y, x: y - 1),
                 (lambda y, x: x)
             )
 
         if game.delay: return
     
-        if rotation and self.active_piece:
+        if rotation:
             self.transform(
                 (lambda y, x: self.axis_y - (self.axis_x - x) * rotation),
-                (lambda y, x: self.axis_x + (self.axis_y - y) * rotation),
-                (lambda y, x: self.axis_y + (self.axis_x - x) * rotation),
-                (lambda y, x: self.axis_x - (self.axis_y - y) * rotation),
+                (lambda y, x: self.axis_x + (self.axis_y - y) * rotation)
             )
             game.delay = 16
 
         if offset_y or offset_x:
             self.transform(
                 (lambda y, x: y + offset_y),
-                (lambda y, x: x + offset_x),
-                (lambda y, x: y - offset_y),
-                (lambda y, x: x - offset_x)
+                (lambda y, x: x + offset_x)
             )
             game.delay = 16
 
@@ -231,11 +232,10 @@ blocks = [Block(0),
           Block(1),
           Block(2),
           Block(3)]
-print(type(blocks[0]))
 
 game = Game()
 playfield = Playfield()
-next_piece = random.randint(0, len(PIECES))
+next_piece = random.randint(0, 6)
 playfield.spawn(next_piece)
 
 running = True
