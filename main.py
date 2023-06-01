@@ -99,12 +99,12 @@ class Playfield():
         for y in range(len(mask)):
             for x in range(len(mask[0])):
 
+                if not mask[y][x]: continue
+
                 to_y = y + origin_offset_y
                 to_x = x + origin_offset_x
-
-                if mask[y][x]:
-                    self.grid[to_y][to_x] = self.sprite
-                    self.curr.add((to_y, to_x))
+                self.grid[to_y][to_x] = self.sprite
+                self.curr.add((to_y, to_x))
 
     def collision(self, y: int, x: int) -> bool:
         lower_bound_y = 0
@@ -212,15 +212,21 @@ class Game():
         playfield.update(offset_y, offset_x, rotation, drop)
 
     def render(self, blocks: list) -> None:
-        block_width = block_height = 16
         for y, row in enumerate(playfield.grid):
             for x, sprite in enumerate(row):
-                if sprite: screen.blit(blocks[sprite].surface,
-                                      (x * block_width, y * block_height))
+
+                if not sprite: continue
+
+                surface = blocks[sprite].surface
+                screen.blit(surface, (x*16, y*16))
 
     def quit(self, event: Event) -> bool:
-        if event.type == KEYDOWN and event.key == K_ESCAPE: return True
-        if event.type == QUIT: return True
+        if event.type == KEYDOWN and event.key == K_ESCAPE:
+            return True
+
+        if event.type == QUIT:
+            return True
+
         return False
 
 pygame.init()
