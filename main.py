@@ -103,6 +103,7 @@ class Playfield():
 
                 to_y = y + origin_offset_y
                 to_x = x + origin_offset_x
+
                 self.grid[to_y][to_x] = self.sprite
                 self.curr.add((to_y, to_x))
 
@@ -140,7 +141,6 @@ class Playfield():
                   calc_y: Callable[[int, int], int],
                   calc_x: Callable[[int, int], int]) -> None:
 
-        if not self.curr_piece: return
 
         self.next = set()
         for (y, x) in self.curr:
@@ -168,40 +168,81 @@ class Playfield():
                 (lambda y, x: y + 1),
                 (lambda y, x: x)
             )
-
-        if game.delay: return
     
-        if rotation:
+        if rotation and self.curr_piece:
             self.transform(
                 (lambda y, x: self.axis_y - (self.axis_x - x) * rotation),
                 (lambda y, x: self.axis_x + (self.axis_y - y) * rotation)
             )
-            game.delay = 16
 
         if offset_y or offset_x:
             self.transform(
                 (lambda y, x: y + offset_y),
                 (lambda y, x: x + offset_x)
             )
-            game.delay = 16
 
 class Game():
     def __init__(self):
         self.frame = 1
-        self.delay = 0
-        self.auto_shift = 6
 
-    def handleMovement(self, keys: ScancodeWrapper) -> None:
+        self.delay = {'down' : 0,
+                      'left' : 0,
+                      'right': 0}
+
+        self.limit = {'low_j': False,
+                      'low_k': False}
+
+        self.auto  = {'down' : False,
+                      'left' : False,
+                      'right': False}
+
+    def handleMovement(self, scan: ScancodeWrapper) -> None:
+        INIT_INTERVAL = 16
+        AUTO_INTERVAL = 6
         offset_y = 0
         offset_x = 0
         rotation = 0
         drop = False
+        keys = {'down' : scan[K_DOWN],
+                'left' : scan[K_LEFT],
+                'right': scan[K_RIGHT],
+                'low_j': scan[K_j],
+                'low_k': scan[K_k]}
+        
+        for key, value in keys.items():
+            if key in self.limit:
+                if not value:
+                    self.limit[key] = False
+                    continue
+                elif self.limit[key]:
+                    keys[key] = False
+                    continue
+                keys[key] = True
+                self.limit[key] = True
+                continue
 
-        if keys[K_DOWN]:  offset_y += 1
-        if keys[K_LEFT]:  offset_x -= 1
-        if keys[K_RIGHT]: offset_x += 1
-        if keys[K_j]: rotation = -1
-        if keys[K_k]: rotation =  1
+            if not value:
+                self.delay[key] = INIT_INTERVAL
+                self.auto[key]  = False
+                continue
+
+            if self.auto[key]:
+                max_delay = AUTO_INTERVAL - 1
+            else:
+                max_delay = INIT_INTERVAL - 1
+
+            self.delay[key] -= 1
+
+            if 0 < self.delay[key] < max_delay: keys[key] = False
+            if not self.delay[key]:
+                self.delay[key] = AUTO_INTERVAL
+                self.auto[key]  = True
+
+        if keys['down'] : offset_y += 1
+        if keys['left'] : offset_x -= 1
+        if keys['right']: offset_x += 1
+        if keys['low_j']: rotation = -1
+        if keys['low_k']: rotation =  1
 
         if self.frame == DROP_INTERVAL:
             self.frame = 1
@@ -248,9 +289,8 @@ running = True
 while running:
 
     for event in pygame.event.get(): running = not game.quit(event)
-    if game.delay: game.delay -= 1
-    keys = pygame.key.get_pressed()
-    game.handleMovement(keys)
+    scan = pygame.key.get_pressed()
+    game.handleMovement(scan)
     screen.fill(BLACK)
     game.render(blocks)
     pygame.display.flip()
