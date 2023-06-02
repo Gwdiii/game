@@ -195,14 +195,9 @@ class Game():
         self.auto  = {'down' : False,
                       'left' : False,
                       'right': False}
-
-    def handleMovement(self, scan: ScancodeWrapper) -> None:
+    def delayAutoShift(self, scan: ScancodeWrapper) -> dict:
         INIT_INTERVAL = 16
         AUTO_INTERVAL = 6
-        offset_y = 0
-        offset_x = 0
-        rotation = 0
-        drop = False
         keys = {'down' : scan[K_DOWN],
                 'left' : scan[K_LEFT],
                 'right': scan[K_RIGHT],
@@ -237,6 +232,15 @@ class Game():
             if not self.delay[key]:
                 self.delay[key] = AUTO_INTERVAL
                 self.auto[key]  = True
+        return keys
+
+    def handleMovement(self, scan: ScancodeWrapper) -> None:
+        offset_y = 0
+        offset_x = 0
+        rotation = 0
+        drop = False
+
+        keys = self.delayAutoShift(scan)
 
         if keys['down'] : offset_y += 1
         if keys['left'] : offset_x -= 1
