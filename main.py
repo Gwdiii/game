@@ -111,7 +111,22 @@ class Playfield():
                 self.grid[to_y][to_x] = self.sprite
                 self.curr.add((to_y, to_x))
 
-    def lock(self) -> None: self.curr = set()
+    def clear(self, cleared_row: int) -> None:
+        new_row = [0] * 10
+        self.grid.pop(cleared_row)
+        self.grid.insert(0, new_row)
+        return
+        
+    def lock(self) -> None:
+        self.curr = set()
+        for y, row in enumerate(playfield.grid):
+            last  = len(row) - 1
+            clear = True
+
+            for x, sprite in enumerate(row):
+                if not sprite: clear = False
+                if x == last and clear == True: self.clear(y)
+
 
     def collision(self, y: int, x: int) -> bool:
         lower_bound_y = 0
