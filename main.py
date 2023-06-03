@@ -1,9 +1,9 @@
 import pygame
 import random
 
-from typing import Callable
+from pygame.key   import ScancodeWrapper
+from typing       import Callable
 from pygame.event import Event
-from pygame.key import ScancodeWrapper
 
 from pygame.locals import (
     K_DOWN,
@@ -81,12 +81,16 @@ class Playfield():
         self.axis_x = 0
         self.sprite = 0
 
-    def spawn(self, index: int) -> None:
-        self.curr_piece = index
+        self.spawn()
+
+    def spawn(self) -> None:
+        self.curr_piece = random.randint(0, 6)
         self.axis_y = 0
         self.axis_x = 5
 
-        mask: list[list[int]] = PIECES[index]
+        index = self.curr_piece
+
+        mask = PIECES[index]
         mask_axis_y: int = 0
         mask_axis_x: int = 2
 
@@ -106,6 +110,8 @@ class Playfield():
 
                 self.grid[to_y][to_x] = self.sprite
                 self.curr.add((to_y, to_x))
+
+    def lock(self) -> None: self.curr = set()
 
     def collision(self, y: int, x: int) -> bool:
         lower_bound_y = 0
@@ -129,6 +135,7 @@ class Playfield():
         to_y = calc_y(y, x)
         to_x = calc_x(y, x)
 
+
         if y == to_y and x == to_x:  return True
         if not self.collision(y, x): return True
         if not (y, x) in self.curr:  return False
@@ -139,7 +146,7 @@ class Playfield():
 
     def transform(self,
                   calc_y: Callable[[int, int], int],
-                  calc_x: Callable[[int, int], int]) -> None:
+                  calc_x: Callable[[int, int], int]) -> bool:
 
 
         self.next = set()
@@ -156,6 +163,9 @@ class Playfield():
             for (y, x) in self.curr: self.grid[y][x] = 0
             for (y, x) in self.next: self.grid[y][x] = self.sprite
             self.curr = self.next
+            return True
+
+        return False
 
     def update(self,
                offset_y: int,
@@ -164,19 +174,23 @@ class Playfield():
                drop: bool) -> None:
 
         if drop:
-            self.transform(
+            ok = self.transform(
                 (lambda y, x: y + 1),
                 (lambda y, x: x)
             )
+
+            if not ok:
+                self.lock()
+                self.spawn()
     
         if rotation and self.curr_piece:
-            self.transform(
+            _ = self.transform(
                 (lambda y, x: self.axis_y - (self.axis_x - x) * rotation),
                 (lambda y, x: self.axis_x + (self.axis_y - y) * rotation)
             )
 
         if offset_y or offset_x:
-            self.transform(
+            _ = self.transform(
                 (lambda y, x: y + offset_y),
                 (lambda y, x: x + offset_x)
             )
@@ -198,6 +212,8 @@ class Game():
     def delayAutoShift(self, scan: ScancodeWrapper) -> dict:
         INIT_INTERVAL = 16
         AUTO_INTERVAL = 6
+        max_delay = INIT_INTERVAL
+
         keys = {'down' : scan[K_DOWN],
                 'left' : scan[K_LEFT],
                 'right': scan[K_RIGHT],
@@ -205,31 +221,32 @@ class Game():
                 'low_k': scan[K_k]}
         
         for key, value in keys.items():
-            if key in self.limit:
-                if not value:
+            if key == 'low_j' or key == 'low_k':
+
+                if value == False:
                     self.limit[key] = False
                     continue
+
                 elif self.limit[key]:
                     keys[key] = False
                     continue
+
                 keys[key] = True
                 self.limit[key] = True
                 continue
 
-            if not value:
+            if value == False:
                 self.delay[key] = INIT_INTERVAL
                 self.auto[key]  = False
                 continue
 
-            if self.auto[key]:
-                max_delay = AUTO_INTERVAL - 1
-            else:
-                max_delay = INIT_INTERVAL - 1
-
             self.delay[key] -= 1
 
+            if self.auto[key] == True:  max_delay = AUTO_INTERVAL - 1
+            if self.auto[key] == False: max_delay = INIT_INTERVAL - 1
+
             if 0 < self.delay[key] < max_delay: keys[key] = False
-            if not self.delay[key]:
+            if self.delay[key] == False:
                 self.delay[key] = AUTO_INTERVAL
                 self.auto[key]  = True
         return keys
@@ -286,8 +303,6 @@ blocks = [Block(0),
 
 game = Game()
 playfield = Playfield()
-next_piece = random.randint(0, 6)
-playfield.spawn(next_piece)
 
 running = True
 while running:
