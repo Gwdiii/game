@@ -135,13 +135,13 @@ class Playfield():
         to_y = calc_y(y, x)
         to_x = calc_x(y, x)
 
-
         if y == to_y and x == to_x:  return True
         if not self.collision(y, x): return True
         if not (y, x) in self.curr:  return False
         if not self.free(to_y, to_x, calc_y, calc_x): return False
 
         self.next.add((to_y, to_x))
+
         return True
 
     def transform(self,
@@ -184,13 +184,13 @@ class Playfield():
                 self.spawn()
     
         if rotation and self.curr_piece:
-            _ = self.transform(
+            ok = self.transform(
                 (lambda y, x: self.axis_y - (self.axis_x - x) * rotation),
                 (lambda y, x: self.axis_x + (self.axis_y - y) * rotation)
             )
 
         if offset_y or offset_x:
-            _ = self.transform(
+            ok = self.transform(
                 (lambda y, x: y + offset_y),
                 (lambda y, x: x + offset_x)
             )
@@ -209,9 +209,11 @@ class Game():
         self.auto  = {'down' : False,
                       'left' : False,
                       'right': False}
+
     def delayAutoShift(self, scan: ScancodeWrapper) -> dict:
         INIT_INTERVAL = 16
         AUTO_INTERVAL = 6
+
         max_delay = INIT_INTERVAL
 
         keys = {'down' : scan[K_DOWN],
@@ -249,6 +251,7 @@ class Game():
             if self.delay[key] == False:
                 self.delay[key] = AUTO_INTERVAL
                 self.auto[key]  = True
+
         return keys
 
     def handleMovement(self, scan: ScancodeWrapper) -> None:
