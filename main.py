@@ -42,6 +42,10 @@ T = [[0,1,1,1],
 
 PIECES = [O, I, J, L, S, Z, T]
 
+PALETTE = [[( 46,  70,  89), (122, 149, 167), (208, 221, 228)],
+          [( 21,  66,  68), ( 66, 143,  66), (207, 219, 114)],
+          [(148,  36,  26), (230, 141,  62), (255, 234,  99)]]
+
 class Playfield():
     def __init__(self):
         self.grid = [[0,0,0,0,0,0,0,0,0,0],
@@ -52,18 +56,30 @@ class Playfield():
                      [0,0,0,0,0,0,0,0,0,0],
                      [0,0,0,0,0,0,0,0,0,0],
                      [0,0,0,0,0,0,0,0,0,0],
-                     [0,0,0,0,0,0,0,0,0,0],
-                     [0,0,0,0,0,0,0,0,0,0],
-                     [0,0,0,0,0,0,0,0,0,0],
-                     [0,0,0,0,0,0,0,0,0,0],
-                     [0,0,0,0,0,0,0,0,0,0],
-                     [0,0,0,0,0,0,0,0,0,0],
-                     [0,0,0,0,0,0,0,0,0,0],
-                     [0,0,0,0,0,0,0,0,0,0],
-                     [0,0,0,0,0,0,0,0,0,0],
-                     [0,0,0,0,0,0,0,0,0,0],
-                     [0,0,0,0,0,0,0,0,0,0],
-                     [0,0,0,0,0,0,0,0,0,0]]
+                     # [0,0,0,0,0,0,0,0,0,0],
+                     # [0,0,0,0,0,0,0,0,0,0],
+                     # [0,0,0,0,0,0,0,0,0,0],
+                     # [0,0,0,0,0,0,0,0,0,0],
+                     # [0,0,0,0,0,0,0,0,0,0],
+                     # [0,0,0,0,0,0,0,0,0,0],
+                     # [0,0,0,0,0,0,0,0,0,0],
+                     # [0,0,0,0,0,0,0,0,0,0],
+                     # [0,0,0,0,0,0,0,0,0,0],
+                     # [0,0,0,0,0,0,0,0,0,0],
+                     # [0,0,0,0,0,0,0,0,0,0],
+                     # [0,0,0,0,0,0,0,0,0,0]]
+                     [1,1,1,1,1,1,1,1,1,0],
+                     [1,1,1,1,1,1,1,1,1,0],
+                     [1,1,1,1,1,1,1,1,1,0],
+                     [1,1,1,1,1,1,1,1,1,0],
+                     [1,1,1,1,1,1,1,1,1,0],
+                     [1,1,1,1,1,1,1,1,1,0],
+                     [1,1,1,1,1,1,1,1,1,0],
+                     [1,1,1,1,1,1,1,1,1,0],
+                     [1,1,1,1,1,1,1,1,1,0],
+                     [1,1,1,1,1,1,1,1,1,0],
+                     [1,1,1,1,1,1,1,1,1,0],
+                     [1,1,1,1,1,1,1,1,1,0]]
 
         self.curr_piece = 0
         self.curr = set()
@@ -75,7 +91,8 @@ class Playfield():
         self.spawn()
 
     def spawn(self) -> None:
-        self.curr_piece = random.randint(0, 6)
+        # self.curr_piece = random.randint(0, 6)
+        self.curr_piece = 1
         self.axis_y = 0
         self.axis_x = 5
 
@@ -194,7 +211,7 @@ class Playfield():
                 score = level.calcScore(lines_cleared)
                 game.score += score
                 if score > 0: print('score: ' + str(game.score))
-                level.nextLevel(lines_cleared)
+                level.updateLevel(lines_cleared)
                 self.spawn()
     
         if rotation and self.curr_piece:
@@ -212,11 +229,11 @@ class Playfield():
 class Level():
     def __init__(self):
         self.level = 0
-        self.start_level = 0
         self.line_total = 0
         self.drop_interval = 48 
+        self.start_level = 0
     
-    def nextLevel(self, lines: int) -> None:
+    def updateLevel(self, lines: int) -> None:
         init_threshold_a = self.start_level * 10 + 10
         init_threshold_b = max(100, self.start_level * 10 - 50)
         init_threshold_min = min(init_threshold_a, init_threshold_b)
@@ -236,8 +253,9 @@ class Level():
 
         if level_complete:
             self.level += 1
-            print('Level: ' + str(self.level))
             self.drop_interval = self.calcDropInterval(self.level)
+            for block in blocks: block.updatePalette(self.level)
+            print('Level: ' + str(self.level))
 
 
     def calcScore(self, lines: int) -> int:
@@ -362,10 +380,36 @@ class Game():
 class Block(pygame.sprite.Sprite):
     def __init__(self, index: int):
         path = 'block_' + str(index) + '.png'
-        image = pygame.image.load(path)
-        self.surface = image.convert()
+        self.image = pygame.image.load(path)
+        print('image type: ' + str(type(self.image)))
+        self.surface = self.image.convert()
         self.surface.set_colorkey((BLACK))
+        self.palette= PALETTE[0]
         self.index = index
+
+    def paletteSwap(self,
+                   surface: pygame.surface.Surface,
+                   old_color,
+                   new_color) -> pygame.surface.Surface:
+
+        new_image = self.image
+        new_image.fill(new_color)
+        surface.set_colorkey(old_color)
+        new_image.blit(surface, (0, 0))
+
+        return new_image
+
+    def updatePalette(self, level: int) -> None:
+        new_palette = PALETTE[level % 10]
+        old_palette = self.palette
+
+        for i in range(len(new_palette)):
+            self.paletteSwap(self.surface,
+                             old_palette[i],
+                             new_palette[i])
+
+        self.palette = new_palette
+
 
 pygame.init()
 
