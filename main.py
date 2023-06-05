@@ -56,30 +56,18 @@ class Playfield():
                      [0,0,0,0,0,0,0,0,0,0],
                      [0,0,0,0,0,0,0,0,0,0],
                      [0,0,0,0,0,0,0,0,0,0],
-                     # [0,0,0,0,0,0,0,0,0,0],
-                     # [0,0,0,0,0,0,0,0,0,0],
-                     # [0,0,0,0,0,0,0,0,0,0],
-                     # [0,0,0,0,0,0,0,0,0,0],
-                     # [0,0,0,0,0,0,0,0,0,0],
-                     # [0,0,0,0,0,0,0,0,0,0],
-                     # [0,0,0,0,0,0,0,0,0,0],
-                     # [0,0,0,0,0,0,0,0,0,0],
-                     # [0,0,0,0,0,0,0,0,0,0],
-                     # [0,0,0,0,0,0,0,0,0,0],
-                     # [0,0,0,0,0,0,0,0,0,0],
-                     # [0,0,0,0,0,0,0,0,0,0]]
-                     [1,1,1,1,1,1,1,1,1,0],
-                     [1,1,1,1,1,1,1,1,1,0],
-                     [1,1,1,1,1,1,1,1,1,0],
-                     [1,1,1,1,1,1,1,1,1,0],
-                     [1,1,1,1,1,1,1,1,1,0],
-                     [1,1,1,1,1,1,1,1,1,0],
-                     [1,1,1,1,1,1,1,1,1,0],
-                     [1,1,1,1,1,1,1,1,1,0],
-                     [1,1,1,1,1,1,1,1,1,0],
-                     [1,1,1,1,1,1,1,1,1,0],
-                     [1,1,1,1,1,1,1,1,1,0],
-                     [1,1,1,1,1,1,1,1,1,0]]
+                     [0,0,0,0,0,0,0,0,0,0],
+                     [0,0,0,0,0,0,0,0,0,0],
+                     [0,0,0,0,0,0,0,0,0,0],
+                     [0,0,0,0,0,0,0,0,0,0],
+                     [0,0,0,0,0,0,0,0,0,0],
+                     [0,0,0,0,0,0,0,0,0,0],
+                     [0,0,0,0,0,0,0,0,0,0],
+                     [0,0,0,0,0,0,0,0,0,0],
+                     [0,0,0,0,0,0,0,0,0,0],
+                     [0,0,0,0,0,0,0,0,0,0],
+                     [0,0,0,0,0,0,0,0,0,0],
+                     [0,0,0,0,0,0,0,0,0,0]]
 
         self.curr_piece = 0
         self.curr = set()
@@ -91,8 +79,7 @@ class Playfield():
         self.spawn()
 
     def spawn(self) -> None:
-        # self.curr_piece = random.randint(0, 6)
-        self.curr_piece = 1
+        self.curr_piece = random.randint(0, 6)
         self.axis_y = 0
         self.axis_x = 5
 
@@ -381,21 +368,21 @@ class Block(pygame.sprite.Sprite):
     def __init__(self, index: int):
         path = 'block_' + str(index) + '.png'
         self.image = pygame.image.load(path)
-        print('image type: ' + str(type(self.image)))
         self.surface = self.image.convert()
         self.surface.set_colorkey((BLACK))
-        self.palette= PALETTE[0]
-        self.index = index
+        self.palette = PALETTE[0]
+
+    def initSurface(self, surface: pygame.surface.Surface) -> pygame.surface.Surface:
+        return surface
 
     def paletteSwap(self,
-                   surface: pygame.surface.Surface,
-                   old_color,
-                   new_color) -> pygame.surface.Surface:
+                    old_color,
+                    new_color) -> pygame.surface.Surface:
 
-        new_image = self.image
+        new_image = pygame.Surface(self.surface.get_size())
         new_image.fill(new_color)
-        surface.set_colorkey(old_color)
-        new_image.blit(surface, (0, 0))
+        new_image.set_colorkey(old_color)
+        new_image.blit(self.surface, (0, 0))
 
         return new_image
 
@@ -404,12 +391,9 @@ class Block(pygame.sprite.Sprite):
         old_palette = self.palette
 
         for i in range(len(new_palette)):
-            self.paletteSwap(self.surface,
-                             old_palette[i],
-                             new_palette[i])
-
-        self.palette = new_palette
-
+            self.surface = self.paletteSwap(old_palette[i],
+                                            new_palette[i])
+        self.surface.set_colorkey(BLACK)
 
 pygame.init()
 
