@@ -372,9 +372,6 @@ class Block(pygame.sprite.Sprite):
         self.surface.set_colorkey((BLACK))
         self.palette = PALETTE[0]
 
-    def initSurface(self, surface: pygame.surface.Surface) -> pygame.surface.Surface:
-        return surface
-
     def paletteSwap(self,
                     old_color,
                     new_color) -> pygame.surface.Surface:
