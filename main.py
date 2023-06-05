@@ -16,9 +16,8 @@ from pygame.locals import (
     QUIT,
 )
 
-WINDOW = (640, 480)
+WINDOW = (160, 320)
 BLACK  = (0, 0, 0)
-DROP_INTERVAL = 60
 
 O = [[0,1,1,0],
      [0,1,1,0]]
@@ -42,14 +41,6 @@ T = [[0,1,1,1],
      [0,0,1,0]]
 
 PIECES = [O, I, J, L, S, Z, T]
-
-class Block(pygame.sprite.Sprite):
-    def __init__(self, index: int):
-        path = 'block_' + str(index) + '.png'
-        image = pygame.image.load(path)
-        self.surface = image.convert()
-        self.surface.set_colorkey((BLACK))
-        self.index = index
 
 class Playfield():
     def __init__(self):
@@ -117,16 +108,21 @@ class Playfield():
         self.grid.insert(0, new_row)
         return
         
-    def lock(self) -> None:
+    def lock(self) -> int:
         self.curr = set()
+        total_cleared = 0
+
         for y, row in enumerate(playfield.grid):
             last  = len(row) - 1
             clear = True
 
             for x, sprite in enumerate(row):
-                if not sprite: clear = False
-                if x == last and clear == True: self.clear(y)
+                if sprite == 0: clear = False
+                if x == last and clear == True:
+                    total_cleared += 1
+                    self.clear(y)
 
+        return total_cleared
 
     def collision(self, y: int, x: int) -> bool:
         lower_bound_y = 0
@@ -163,7 +159,6 @@ class Playfield():
                   calc_y: Callable[[int, int], int],
                   calc_x: Callable[[int, int], int]) -> bool:
 
-
         self.next = set()
         for (y, x) in self.curr:
             to_y = calc_y(y, x)
@@ -195,7 +190,11 @@ class Playfield():
             )
 
             if not ok:
-                self.lock()
+                lines_cleared = self.lock()
+                score = level.calcScore(lines_cleared)
+                game.score += score
+                if score > 0: print('score: ' + str(game.score))
+                level.nextLevel(lines_cleared)
                 self.spawn()
     
         if rotation and self.curr_piece:
@@ -210,9 +209,60 @@ class Playfield():
                 (lambda y, x: x + offset_x)
             )
 
+class Level():
+    def __init__(self):
+        self.level = 0
+        self.start_level = 0
+        self.line_total = 0
+        self.drop_interval = 48 
+    
+    def nextLevel(self, lines: int) -> None:
+        init_threshold_a = self.start_level * 10 + 10
+        init_threshold_b = max(100, self.start_level * 10 - 50)
+        init_threshold_min = min(init_threshold_a, init_threshold_b)
+        level_complete = False
+
+        self.line_total += lines
+
+        if self.level == self.start_level:
+
+            if self.line_total >= init_threshold_min:
+                level_complete = True
+
+        if self.level != self.start_level:
+            levels_progressed = (self.line_total - init_threshold_min) // 10 + 1
+            if self.level != self.start_level + levels_progressed:
+                level_complete = True
+
+        if level_complete:
+            self.level += 1
+            print('Level: ' + str(self.level))
+            self.drop_interval = self.calcDropInterval(self.level)
+
+
+    def calcScore(self, lines: int) -> int:
+        if lines == 1: return 40   * (self.level + 1)
+        if lines == 2: return 100  * (self.level + 1)
+        if lines == 3: return 300  * (self.level + 1)
+        if lines == 4: return 1200 * (self.level + 1)
+
+        return 0
+
+    def calcDropInterval(self, level: int) -> int:
+        if level <= 8:  return 48 - level * 5
+        if level == 9:  return 6
+        if level <= 12: return 5
+        if level <= 15: return 4
+        if level <= 18: return 3
+        if level <= 28: return 2
+        if level >= 29: return 1
+
+        return 0 
+
 class Game():
     def __init__(self):
         self.frame = 1
+        self.score = 0
 
         self.delay = {'down' : 0,
                       'left' : 0,
@@ -283,7 +333,7 @@ class Game():
         if keys['low_j']: rotation = -1
         if keys['low_k']: rotation =  1
 
-        if self.frame == DROP_INTERVAL:
+        if self.frame == level.drop_interval:
             self.frame = 1
             drop = True
         else:
@@ -309,6 +359,14 @@ class Game():
 
         return False
 
+class Block(pygame.sprite.Sprite):
+    def __init__(self, index: int):
+        path = 'block_' + str(index) + '.png'
+        image = pygame.image.load(path)
+        self.surface = image.convert()
+        self.surface.set_colorkey((BLACK))
+        self.index = index
+
 pygame.init()
 
 screen = pygame.display.set_mode(WINDOW)
@@ -320,6 +378,7 @@ blocks = [Block(0),
           Block(3)]
 
 game = Game()
+level = Level()
 playfield = Playfield()
 
 running = True
