@@ -43,8 +43,8 @@ T = [[0,1,1,1],
 PIECES = [O, I, J, L, S, Z, T]
 
 PALETTE = [[( 46,  70,  89), (122, 149, 167), (208, 221, 228)],
-          [( 21,  66,  68), ( 66, 143,  66), (207, 219, 114)],
-          [(148,  36,  26), (230, 141,  62), (255, 234,  99)]]
+           [( 21,  66,  68), ( 66, 143,  66), (207, 219, 114)],
+           [(148,  36,  26), (230, 141,  62), (255, 234,  99)]]
 
 class Playfield():
     def __init__(self):
@@ -198,7 +198,7 @@ class Playfield():
                 score = level.calcScore(lines_cleared)
                 game.score += score
                 if score > 0: print('score: ' + str(game.score))
-                level.updateLevel(lines_cleared)
+                level.update(lines_cleared)
                 self.spawn()
     
         if rotation and self.curr_piece:
@@ -220,7 +220,7 @@ class Level():
         self.drop_interval = 48 
         self.start_level = 0
     
-    def updateLevel(self, lines: int) -> None:
+    def update(self, lines: int) -> None:
         init_threshold_a = self.start_level * 10 + 10
         init_threshold_b = max(100, self.start_level * 10 - 50)
         init_threshold_min = min(init_threshold_a, init_threshold_b)
@@ -237,6 +237,8 @@ class Level():
             levels_progressed = (self.line_total - init_threshold_min) // 10 + 1
             if self.level != self.start_level + levels_progressed:
                 level_complete = True
+
+        # if lines: level_complete = True
 
         if level_complete:
             self.level += 1
@@ -384,13 +386,17 @@ class Block(pygame.sprite.Sprite):
         return new_image
 
     def updatePalette(self, level: int) -> None:
-        new_palette = PALETTE[level % 10]
+        new_palette = PALETTE[level % 3]
         old_palette = self.palette
+        print('updating palette')
+        print('old_palette: ' + str(old_palette))
+        print('new_palette: ' + str(new_palette))
 
         for i in range(len(new_palette)):
             self.surface = self.paletteSwap(old_palette[i],
                                             new_palette[i])
         self.surface.set_colorkey(BLACK)
+        self.palette = new_palette
 
 pygame.init()
 
