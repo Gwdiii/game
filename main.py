@@ -388,9 +388,6 @@ class Block(pygame.sprite.Sprite):
     def updatePalette(self, level: int) -> None:
         new_palette = PALETTE[level % 3]
         old_palette = self.palette
-        print('updating palette')
-        print('old_palette: ' + str(old_palette))
-        print('new_palette: ' + str(new_palette))
 
         for i in range(len(new_palette)):
             self.surface = self.paletteSwap(old_palette[i],
