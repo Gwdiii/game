@@ -43,9 +43,10 @@ T = [[0,1,1,1],
 
 PIECES = [O, I, J, L, S, Z, T]
 
-PALETTE = [[( 46,  70,  89), (122, 149, 167), (208, 221, 228)],
-           [( 21,  66,  68), ( 66, 143,  66), (207, 219, 114)],
-           [(148,  36,  26), (230, 141,  62), (255, 234,  99)]]
+PALETTE = [[( 13,  23,  31), ( 46,  70,  89), ( 67,  93, 115), ( 94, 120, 140),
+            (122, 149, 167), (153, 176, 191), (180, 197, 209), (208, 221, 228)],
+           [(117,  13,  16), (148,  36,  26), (179,  68,  40), (209, 102,  48),
+            (230, 141,  62), (237, 172,  74), (245, 202,  83), (255, 234,  99)]]
 
 class Playfield():
     def __init__(self):
@@ -239,8 +240,6 @@ class Level():
             if self.level != self.start_level + levels_progressed:
                 level_complete = True
 
-        # if lines: level_complete = True
-
         if level_complete:
             self.level += 1
             self.drop_interval = self.calcDropInterval(self.level)
@@ -391,7 +390,7 @@ class Block(pygame.sprite.Sprite):
         return new_image
 
     def updatePalette(self, level: int) -> None:
-        new_palette = PALETTE[level % 3]
+        new_palette = PALETTE[level % 2]
         old_palette = self.palette
 
         for i in range(len(new_palette)):
