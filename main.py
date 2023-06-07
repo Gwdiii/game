@@ -16,8 +16,9 @@ from pygame.locals import (
     QUIT,
 )
 
-WINDOW = (160, 320)
+WHITE  = (224, 224, 224)
 BLACK  = (0, 0, 0)
+WINDOW = (160, 336)
 
 O = [[0,1,1,0],
      [0,1,1,0]]
@@ -270,7 +271,6 @@ class Game():
     def __init__(self):
         self.frame = 1
         self.score = 0
-
         self.delay = {'down' : 0,
                       'left' : 0,
                       'right': 0}
@@ -281,6 +281,8 @@ class Game():
         self.auto  = {'down' : False,
                       'left' : False,
                       'right': False}
+
+        self.font = pygame.font.SysFont("Arial", 16)
 
     def delayAutoShift(self, scan: ScancodeWrapper) -> dict:
         INIT_INTERVAL = 16
@@ -349,13 +351,16 @@ class Game():
         playfield.update(offset_y, offset_x, rotation, drop)
 
     def render(self, blocks: list) -> None:
+        score = self.font.render(str(self.score), True, WHITE)
+        screen.blit(score, (0, 0))
+        
         for y, row in enumerate(playfield.grid):
             for x, sprite in enumerate(row):
 
                 if not sprite: continue
 
                 surface = blocks[sprite].surface
-                screen.blit(surface, (x*16, y*16))
+                screen.blit(surface, (x*16, 16+y*16))
 
     def quit(self, event: Event) -> bool:
         if event.type == KEYDOWN and event.key == K_ESCAPE:
@@ -398,7 +403,9 @@ class Block(pygame.sprite.Sprite):
 pygame.init()
 
 screen = pygame.display.set_mode(WINDOW)
+pygame.display.set_caption('Tetris')
 clock  = pygame.time.Clock()
+
 
 blocks = [Block(0),
           Block(1),
