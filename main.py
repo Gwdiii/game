@@ -199,7 +199,6 @@ class Playfield():
                 lines_cleared = self.lock()
                 score = level.calcScore(lines_cleared)
                 game.score += score
-                if score > 0: print('score: ' + str(game.score))
                 level.update(lines_cleared)
                 self.spawn()
     
@@ -217,10 +216,10 @@ class Playfield():
 
 class Level():
     def __init__(self):
-        self.level = 0
-        self.line_total = 0
-        self.drop_interval = 48 
+        self.level = game.level
         self.start_level = 0
+        self.drop_interval = 48 
+        self.line_total = 0
     
     def update(self, lines: int) -> None:
         init_threshold_a = self.start_level * 10 + 10
@@ -242,10 +241,9 @@ class Level():
 
         if level_complete:
             self.level += 1
+            game.level += 1
             self.drop_interval = self.calcDropInterval(self.level)
             for block in blocks: block.updatePalette(self.level)
-            print('Level: ' + str(self.level))
-
 
     def calcScore(self, lines: int) -> int:
         if lines == 1: return 40   * (self.level + 1)
@@ -269,6 +267,7 @@ class Level():
 class Game():
     def __init__(self):
         self.frame = 1
+        self.level = 0
         self.score = 0
         self.delay = {'down' : 0,
                       'left' : 0,
@@ -351,7 +350,12 @@ class Game():
 
     def render(self, blocks: list) -> None:
         score = self.font.render(str(self.score), True, WHITE)
-        screen.blit(score, (0, 0))
+        level = self.font.render('L' + str(self.level), True, WHITE)
+
+        level_offset = 140
+        if self.level > 9: level_offset -= 8
+        screen.blit(level, (level_offset, 0))
+        screen.blit(score, (2, 0))
         
         for y, row in enumerate(playfield.grid):
             for x, sprite in enumerate(row):
@@ -382,12 +386,12 @@ class Block(pygame.sprite.Sprite):
                     old_color,
                     new_color) -> pygame.surface.Surface:
 
-        new_image = pygame.Surface(self.surface.get_size())
-        new_image.fill(new_color)
-        new_image.set_colorkey(old_color)
-        new_image.blit(self.surface, (0, 0))
+        new_surface = pygame.Surface(self.surface.get_size())
+        new_surface.fill(new_color)
+        self.surface.set_colorkey(old_color)
+        new_surface.blit(self.surface, (0, 0))
 
-        return new_image
+        return new_surface
 
     def updatePalette(self, level: int) -> None:
         new_palette = PALETTE[level % 2]
@@ -404,7 +408,6 @@ pygame.init()
 screen = pygame.display.set_mode(WINDOW)
 pygame.display.set_caption('Tetris')
 clock  = pygame.time.Clock()
-
 
 blocks = [Block(0),
           Block(1),
