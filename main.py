@@ -18,7 +18,7 @@ from pygame.locals import (
 
 WHITE  = (224, 224, 224)
 BLACK  = (0, 0, 0)
-WINDOW = (160, 336)
+WINDOW = (160, 352)
 
 O = [[0,1,1,0],
      [0,1,1,0]]
@@ -72,6 +72,7 @@ class Playfield():
                      [0,0,0,0,0,0,0,0,0,0]]
 
         self.curr_piece = 0
+        self.next_piece = random.randint(0, 6)
         self.curr = set()
         self.next = set()
         self.axis_y = 0
@@ -81,7 +82,8 @@ class Playfield():
         self.spawn()
 
     def spawn(self) -> None:
-        self.curr_piece = random.randint(0, 6)
+        self.curr_piece = self.next_piece
+        self.next_piece = random.randint(0, 6)
         self.axis_y = 0
         self.axis_x = 5
 
@@ -214,6 +216,57 @@ class Playfield():
                 (lambda y, x: x + offset_x)
             )
 
+class StatusBar:
+    def __init__(self):
+        self.font = pygame.font.SysFont("Arial", 16)
+
+    def formatScoreSurface(self, score: int):
+        string  = str(score)
+        surface = self.font.render(string, True, WHITE)
+        offset  = 2
+
+        return (surface, offset)
+    
+    def formatLevelSurface(self, level: int):
+        string  = 'L' + str(level)
+        surface = self.font.render(string, True, WHITE)
+        offset  = 140
+
+        if level > 9: offset -= 8
+
+        return (surface, offset)
+
+    def formatNextSurface(self, index: int):
+        surface = pygame.Surface((96, 16))
+        string = 'Next: '
+
+        string_surface = self.font.render(string, True, WHITE)
+        preview_surface = self.formatPiecePreview(index)
+
+        preview_offset = 36
+        if index == 1: preview_offset += 8
+        
+        surface.blit(string_surface,  (0, 0))
+        surface.blit(preview_surface, (preview_offset, 0))
+        surface.set_colorkey(BLACK)
+        offset = 2
+
+        return (surface, offset)
+
+    def formatPiecePreview(self, index: int):
+        preview_surface = pygame.Surface((32, 16))
+        mask = PIECES[index]
+
+        for y, row in enumerate(mask):
+            for x, sprite in enumerate(row):
+
+                if not sprite: continue
+
+                block_surface = blocks[0].surface
+                preview_surface.blit(block_surface, (x*8, y*8))
+
+        return preview_surface
+
 class Level():
     def __init__(self):
         self.level = game.level
@@ -279,8 +332,6 @@ class Game():
         self.auto  = {'down' : False,
                       'left' : False,
                       'right': False}
-
-        self.font = pygame.font.SysFont("Arial", 16)
 
     def delayAutoShift(self, scan: ScancodeWrapper) -> dict:
         INIT_INTERVAL = 16
@@ -349,13 +400,13 @@ class Game():
         playfield.update(offset_y, offset_x, rotation, drop)
 
     def render(self, blocks: list) -> None:
-        score = self.font.render(str(self.score), True, WHITE)
-        level = self.font.render('L' + str(self.level), True, WHITE)
+        (level_surface, level_offset) = statusbar.formatLevelSurface(self.level)
+        (score_surface, score_offset) = statusbar.formatScoreSurface(self.score)
+        (next_surface, next_offset) = statusbar.formatNextSurface(playfield.next_piece)
 
-        level_offset = 140
-        if self.level > 9: level_offset -= 8
-        screen.blit(level, (level_offset, 0))
-        screen.blit(score, (2, 0))
+        screen.blit(level_surface, (level_offset, 0))
+        screen.blit(score_surface, (score_offset, 0))
+        screen.blit(next_surface,  (next_offset, 16))
         
         for y, row in enumerate(playfield.grid):
             for x, sprite in enumerate(row):
@@ -363,7 +414,7 @@ class Game():
                 if not sprite: continue
 
                 surface = blocks[sprite].surface
-                screen.blit(surface, (x*16, 16+y*16))
+                screen.blit(surface, (x*16, 32+y*16))
 
     def quit(self, event: Event) -> bool:
         if event.type == KEYDOWN and event.key == K_ESCAPE:
@@ -382,9 +433,7 @@ class Block(pygame.sprite.Sprite):
         self.surface.set_colorkey((BLACK))
         self.palette = PALETTE[0]
 
-    def paletteSwap(self,
-                    old_color,
-                    new_color) -> pygame.surface.Surface:
+    def paletteSwap(self, old_color, new_color) -> pygame.Surface:
 
         new_surface = pygame.Surface(self.surface.get_size())
         new_surface.fill(new_color)
@@ -417,6 +466,7 @@ blocks = [Block(0),
 game = Game()
 level = Level()
 playfield = Playfield()
+statusbar = StatusBar()
 
 running = True
 while running:
