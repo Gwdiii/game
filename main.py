@@ -19,6 +19,8 @@ from pygame.locals import (
 WHITE  = (224, 224, 224)
 BLACK  = (0, 0, 0)
 WINDOW = (160, 352)
+INIT_INTERVAL = 16
+AUTO_INTERVAL = 6
 
 O = [[0,1,1,0],
      [0,1,1,0]]
@@ -225,6 +227,14 @@ class Playfield():
                 (lambda y, x: x + offset_x)
             )
 
+            if not ok: 
+                game.delay['down']  = 1
+                game.delay['left']  = 1
+                game.delay['right'] = 1
+                game.limit['down']  = True
+                game.limit['left']  = True
+                game.limit['right'] = True
+
 class StatusBar:
     def __init__(self):
         self.font = pygame.font.SysFont("Arial", 16)
@@ -343,9 +353,6 @@ class Game():
                       'right': False}
 
     def delayAutoShift(self, scan: ScancodeWrapper) -> dict:
-        INIT_INTERVAL = 16
-        AUTO_INTERVAL = 6
-
         max_delay = INIT_INTERVAL
 
         keys = {'down' : scan[K_DOWN],
@@ -380,7 +387,7 @@ class Game():
             if self.auto[key] == False: max_delay = INIT_INTERVAL - 1
 
             if 0 < self.delay[key] < max_delay: keys[key] = False
-            if self.delay[key] == False:
+            if self.delay[key] < 1:
                 self.delay[key] = AUTO_INTERVAL
                 self.auto[key]  = True
 
