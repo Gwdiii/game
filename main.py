@@ -83,7 +83,7 @@ class Playfield():
 
     def spawn(self) -> None:
         self.curr_piece = self.next_piece
-        self.next_piece = random.randint(0, 6)
+        self.next_piece = self.randomizer(False)
         self.axis_y = 0
         self.axis_x = 5
 
@@ -109,6 +109,15 @@ class Playfield():
 
                 self.grid[to_y][to_x] = self.sprite
                 self.curr.add((to_y, to_x))
+
+    def randomizer(self, second_roll: bool) -> int:
+        roll = random.randint(0, 7)
+
+        if roll == 7: roll = self.randomizer(True)
+        if second_roll: return roll
+        if roll == self.next_piece: roll = self.randomizer(True)
+
+        return roll
 
     def clear(self, cleared_row: int) -> None:
         new_row = [0] * 10
