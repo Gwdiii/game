@@ -47,6 +47,8 @@ PIECES = [O, I, J, L, S, Z, T]
 
 PALETTE = [[( 13,  23,  31), ( 46,  70,  89), ( 67,  93, 115), ( 94, 120, 140),
             (122, 149, 167), (153, 176, 191), (180, 197, 209), (208, 221, 228)],
+           [( 35,  35,  35), ( 62,  62,  62), ( 89,  89,  89), (116, 116, 116),
+            (143, 143, 143), (170, 170, 170), (197, 197, 197), (224, 224, 224)],
            [(117,  13,  16), (148,  36,  26), (179,  68,  40), (209, 102,  48),
             (230, 141,  62), (237, 172,  74), (245, 202,  83), (255, 234,  99)]]
 
@@ -459,7 +461,7 @@ class Block(pygame.sprite.Sprite):
         return new_surface
 
     def updatePalette(self, level: int) -> None:
-        new_palette = PALETTE[level % 2]
+        new_palette = PALETTE[level % len(PALETTE)]
         old_palette = self.palette
 
         for i in range(len(new_palette)):
