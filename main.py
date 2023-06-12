@@ -17,6 +17,7 @@ from pygame.locals import (
 )
 
 WHITE  = (224, 224, 224)
+BACKGROUND = (40, 40, 40)
 BLACK  = (0, 0, 0)
 WINDOW = (160, 352)
 INIT_INTERVAL = 16
@@ -45,12 +46,9 @@ T = [[0,1,1,1],
 
 PIECES = [O, I, J, L, S, Z, T]
 
-PALETTE = [[( 13,  23,  31), ( 46,  70,  89), ( 67,  93, 115), ( 94, 120, 140),
-            (122, 149, 167), (153, 176, 191), (180, 197, 209), (208, 221, 228)],
-           [( 35,  35,  35), ( 62,  62,  62), ( 89,  89,  89), (116, 116, 116),
-            (143, 143, 143), (170, 170, 170), (197, 197, 197), (224, 224, 224)],
-           [(117,  13,  16), (148,  36,  26), (179,  68,  40), (209, 102,  48),
-            (230, 141,  62), (237, 172,  74), (245, 202,  83), (255, 234,  99)]]
+PALETTE = [[(211, 211, 211), (167, 167, 167), (125, 125, 125)],
+           [(255, 203, 127), (255, 151,   0), (169, 117,  46)],
+           [(255, 127, 127), (255,   0,   0), (169,  46,  46)]]
 
 class Playfield():
     def __init__(self):
@@ -445,7 +443,7 @@ class Game():
 
 class Block(pygame.sprite.Sprite):
     def __init__(self, index: int):
-        path = 'block_' + str(index) + '.png'
+        path = 'block_' + str(index) + '.bmp'
         self.image = pygame.image.load(path)
         self.surface = self.image.convert()
         self.surface.set_colorkey((BLACK))
@@ -492,7 +490,7 @@ while running:
     for event in pygame.event.get(): running = not game.quit(event)
     scan = pygame.key.get_pressed()
     game.handleMovement(scan)
-    screen.fill(BLACK)
+    screen.fill(BACKGROUND)
     game.render(blocks)
     pygame.display.flip()
     clock.tick(60)
